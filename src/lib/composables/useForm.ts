@@ -21,7 +21,7 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
 
     const resetForm = () => {
         Object.assign(formData, data);
-        Object.assign(errors, {});
+        Object.keys(errors).forEach(key => delete ((errors as any)[key]));
         valid.value = false;
         loading.value = false;
     }
