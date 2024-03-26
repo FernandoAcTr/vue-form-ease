@@ -1,6 +1,6 @@
 {
   "name": "vue-form-ease",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "type": "module",
   "main": "dist/index.umd.cjs",
@@ -37,6 +37,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "vite-plugin-dts": "^3.7.3",
     "vue": "^3.4.15"
   },
   "devDependencies": {
