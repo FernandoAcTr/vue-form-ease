@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue'
+import { reactive, ref, type Ref, type UnwrapNestedRefs } from 'vue'
 
 type Validator<T, F> = (value: T, form: F) => string | undefined;
 type AsyncValidator<T, F> = (value: T, form: F) => Promise<string | void>;
@@ -14,10 +14,10 @@ type Errors<T> = { [key in keyof Partial<T>]: string };
 
 export function useForm<T extends Object>(options: FormOptions<T>) {
 	const { data, asyncValidations, validations } = options;
-    const loading = ref(false);
-    const valid = ref(true);
-    const formData = reactive<T>({...data});
-    const errors = reactive<Errors<T>>({} as Errors<T>);
+    const loading: Ref<boolean> = ref(false);
+    const valid: Ref<boolean> = ref(true);
+    const formData: UnwrapNestedRefs<T> = reactive<T>({...data});
+    const errors: UnwrapNestedRefs<Errors<T>> = reactive<Errors<T>>({} as Errors<T>);
 
     const resetForm = () => {
         Object.assign(formData, data);
