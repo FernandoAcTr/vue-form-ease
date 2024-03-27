@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
+import fs from 'fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import dts from 'vite-plugin-dts'
@@ -8,7 +9,16 @@ import dts from 'vite-plugin-dts'
 export default defineConfig({
   plugins: [
     vue(),
-    dts()
+    dts({
+      afterBuild(emittedFiles) {
+        const dtsFile = emittedFiles.has(resolve(__dirname, 'dist', 'composables', 'useForm.d.ts').replace(/\\/g, '/'))
+        if (dtsFile) {
+          const source = resolve(__dirname, 'src', 'lib', 'composables', 'useForm.d.ts')
+          const target = resolve(__dirname, 'dist', 'composables', 'useForm.d.ts')
+          fs.copyFileSync(source, target)
+        }
+      }
+    })
   ],
   resolve: {
     alias: {
@@ -19,17 +29,17 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src', 'lib', 'index.ts'),
       name: 'vue-form-ease',
-      fileName: 'index',
+      fileName: 'index'
     },
     rollupOptions: {
       external: ['vue'],
       output: {
         globals: {
-          vue: 'Vue',
-        },
-      },
+          vue: 'Vue'
+        }
+      }
     },
     sourcemap: true,
-    emptyOutDir: true,
+    emptyOutDir: true
   }
 })
