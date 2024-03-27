@@ -28,7 +28,6 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
 
     const validateForm = (): boolean => {
         if(!validations || Object.keys(validations).length == 0) return true
-
         let isValid = true;
         const _errors: any = {}
 
@@ -41,6 +40,7 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
             }            
         }
 
+        Object.keys(errors).forEach(key => delete ((errors as any)[key]))
         Object.assign(errors, _errors);
         valid.value = isValid;
 
