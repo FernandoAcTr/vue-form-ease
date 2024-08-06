@@ -494,6 +494,50 @@ validations: {
 }
 ```
 
+## Nuxt / Server Side Validation
+
+You can extract validators to a separate validation object and use it in both client and server side. For example, you can create a file called `validations.ts` and export the validations object.
+
+```TS
+export const orderValidator = {
+  name: (v: string) => string(v).required("Please enter your name").validate(),
+  total: (v: number) => number(v).required("Total is mandatory").validate(),
+  items: (v: OrderItem[]) => array(v).required("Items can't be empty").validate(),
+}
+```
+
+Then you can import the object in your component and use it in the `useForm` hook.
+
+```TS	
+import { orderValidator } from '../../utils/validators/order.validator';
+
+const { formData, errors, validateForm, resetForm } = useForm({
+  data: {
+    name: "",
+    total: 0,
+    items: [] as OrderItemType[],
+  },
+  validations: orderValidator,
+})
+```
+
+And you can use the same object in the server side to validate the data before processing it, using `execValidators` or `execAsyncValidators` functions
+
+```TS
+import { execValidators } from "vue-form-ease"
+
+export default defineEventHandler(async (event) => {
+  const { data, errors, valid } = await readValidatedBody(event, (body: any) => execValidators(body, orderValidator))
+
+  if (!valid) {
+    setResponseStatus(event, 400)
+    return Object.keys(errors).map((key) => ({ field: key, message: errors[key] }))
+  }
+
+  //Process validated data
+})
+```
+
 ## Related packages
 
 Check the related package for React [React Form Ease](https://www.npmjs.com/package/react-form-ease)
