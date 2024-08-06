@@ -21,7 +21,7 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
     const resetForm = () => {
         Object.assign(formData, data)
         Object.keys(errors).forEach((key) => delete (errors as any)[key])
-        valid.value = false
+        valid.value = true
         loading.value = false
     }
 
@@ -84,7 +84,9 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
         const errorMessage = validator((formData as any)[field], formData)
 
         if (errorMessage) {
-            ;(errors as any)[field] = errorMessage
+            //@ts-ignore
+            errors[field] = errorMessage
+            valid.value = false
         }
 
         return errorMessage ? false : true
@@ -103,7 +105,8 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
         }
 
         if (errorMessage) {
-            ;(errors as any)[field] = errorMessage
+            //@ts-ignore
+            errors[field] = errorMessage
         }
 
         return errorMessage ? false : true
@@ -111,6 +114,7 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
 
     return {
         loading,
+        valid,
         formData,
         errors,
         resetForm,
@@ -118,5 +122,64 @@ export function useForm<T extends Object>(options: FormOptions<T>) {
         validateFormAsync,
         validateInput,
         validateInputAsync
+    }
+}
+
+export function execValidators<T>(
+    data: unknown,
+    validations: { [K in keyof Partial<T>]: Validator<T[K], T> }
+): { errors: Errors<T>; valid: boolean; data: T } {
+    if (Object.keys(validations).length === 0) return { errors: {} as Errors<T>, valid: true, data: data as T }
+
+    let isValid = true
+    const _errors: Errors<T> = {} as Errors<T>
+
+    for (const key of Object.keys(validations) as (keyof T)[]) {
+        const validator = validations[key] as Validator<T[typeof key], T>
+        const field = (data as T)[key]
+        const errorMessage = validator(field, data as T)
+        if (errorMessage) {
+            isValid = false
+            _errors[key] = errorMessage
+        }
+    }
+
+    return {
+        errors: _errors,
+        valid: isValid,
+        data: data as T
+    }
+}
+
+export async function execAsyncValidators<T>(
+    data: unknown,
+    asyncValidations: { [K in keyof Partial<T>]: AsyncValidator<T[K], T> }
+): Promise<{ errors: Errors<T>; valid: boolean; data: T }> {
+    if (Object.keys(asyncValidations).length === 0)
+        return Promise.resolve({ errors: {} as Errors<T>, valid: true, data: data as T })
+
+    let isValid = true
+    const _errors: Errors<T> = {} as Errors<T>
+
+    const validationPromises = (Object.keys(asyncValidations) as (keyof T)[]).map(async (key) => {
+        const validator = asyncValidations[key] as AsyncValidator<T[typeof key], T>
+        try {
+            const errorMessage = await validator((data as T)[key], data as T)
+            if (errorMessage) {
+                isValid = false
+                _errors[key] = errorMessage
+            }
+        } catch (error) {
+            isValid = false
+            _errors[key] = `An exception occurred while the validator [${String(key)}] was running`
+        }
+    })
+
+    await Promise.all(validationPromises)
+
+    return {
+        errors: _errors,
+        valid: isValid,
+        data: data as T
     }
 }
